@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Dashboard Insight ML - Klasifikasi Profit Superstore menggunakan Logistic Regression, Random Forest, dan XGBoost">
+  <title>Superstore Profit Classifier — ML Insights Dashboard</title>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+:root{--bg-primary:#0a0e1a;--bg-secondary:#111827;--bg-card:rgba(17,24,39,0.7);--bg-glass:rgba(255,255,255,0.04);--border-glass:rgba(255,255,255,0.08);--text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-muted:#64748b;--accent-blue:#3b82f6;--accent-purple:#8b5cf6;--accent-cyan:#06b6d4;--accent-green:#10b981;--accent-orange:#f59e0b;--accent-red:#ef4444;--accent-pink:#ec4899;--gradient-1:linear-gradient(135deg,#3b82f6,#8b5cf6);--gradient-2:linear-gradient(135deg,#06b6d4,#3b82f6);--gradient-3:linear-gradient(135deg,#10b981,#06b6d4);--gradient-4:linear-gradient(135deg,#f59e0b,#ef4444);--shadow-glow:0 0 30px rgba(59,130,246,0.15);--radius:16px;--radius-sm:10px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 20% 50%,rgba(59,130,246,0.08) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(139,92,246,0.06) 0%,transparent 50%),radial-gradient(circle at 50% 80%,rgba(6,182,212,0.05) 0%,transparent 50%);animation:bgFloat 20s ease-in-out infinite;z-index:-1}
+@keyframes bgFloat{0%,100%{transform:translate(0,0) rotate(0deg)}33%{transform:translate(2%,-2%) rotate(1deg)}66%{transform:translate(-1%,1%) rotate(-1deg)}}
+.container{max-width:1400px;margin:0 auto;padding:24px}
+.header{text-align:center;padding:48px 24px 32px;position:relative}
+.header__title{font-size:2.8rem;font-weight:800;background:linear-gradient(135deg,#f1f5f9 0%,#94a3b8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;margin-bottom:12px;animation:fadeInDown 0.6s ease 0.1s both}
+.header__subtitle{font-size:1.1rem;color:var(--text-secondary);max-width:700px;margin:0 auto 8px;animation:fadeInDown 0.6s ease 0.2s both}
+.header__team{font-size:0.85rem;color:var(--text-muted);animation:fadeInDown 0.6s ease 0.3s both}
+.header__download-btn{display:inline-flex;align-items:center;gap:8px;margin-top:20px;padding:12px 28px;background:var(--gradient-2);color:#fff;text-decoration:none;border-radius:999px;font-size:0.9rem;font-weight:600;letter-spacing:0.3px;transition:all 0.3s ease;animation:fadeInDown 0.6s ease 0.4s both;box-shadow:0 4px 20px rgba(6,182,212,0.25)}
+.header__download-btn:hover{transform:translateY(-2px);box-shadow:0 6px 30px rgba(6,182,212,0.4)}
+.header__download-btn:active{transform:translateY(0)}
+.section{margin-bottom:40px;animation:fadeInUp 0.6s ease both}
+.section__title{font-size:1.4rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.section__title span{font-size:1.3rem}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.metric-card{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:var(--radius);padding:24px;backdrop-filter:blur(20px);transition:all 0.3s ease;position:relative;overflow:hidden}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
+.metric-card--blue::before{background:var(--gradient-1)}.metric-card--cyan::before{background:var(--gradient-2)}.metric-card--green::before{background:var(--gradient-3)}.metric-card--orange::before{background:var(--gradient-4)}.metric-card--purple::before{background:linear-gradient(135deg,#8b5cf6,#ec4899)}
+.metric-card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,0.15);box-shadow:var(--shadow-glow)}
+.metric-card__label{font-size:0.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.2px;font-weight:600;margin-bottom:10px}
+.metric-card__value{font-size:2rem;font-weight:800;margin-bottom:6px}
+.metric-card__desc{font-size:0.82rem;color:var(--text-secondary)}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:24px}
+.chart-card{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:var(--radius);padding:28px;backdrop-filter:blur(20px);transition:all 0.3s ease}
+.chart-card:hover{border-color:rgba(255,255,255,0.12);box-shadow:var(--shadow-glow)}
+.chart-card__title{font-size:1rem;font-weight:600;margin-bottom:20px;color:var(--text-primary)}
+.chart-card canvas{width:100%!important;max-height:320px}
+.table-card{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:var(--radius);padding:28px;backdrop-filter:blur(20px);overflow-x:auto}
+.table-card table{width:100%;border-collapse:collapse;font-size:0.9rem}
+.table-card th{text-align:left;padding:12px 16px;font-weight:600;color:var(--text-secondary);border-bottom:1px solid var(--border-glass);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.8px}
+.table-card td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text-primary)}
+.table-card tr:last-child td{border-bottom:none}
+.table-card tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:0.75rem;font-weight:600}
+.badge--best{background:rgba(16,185,129,0.15);color:var(--accent-green)}
+.badge--good{background:rgba(59,130,246,0.15);color:var(--accent-blue)}
+.insights-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.insight-card{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:var(--radius);padding:24px;backdrop-filter:blur(20px);transition:all 0.3s ease}
+.insight-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-glow)}
+.insight-card__icon{font-size:2rem;margin-bottom:12px}
+.insight-card__title{font-size:1rem;font-weight:700;margin-bottom:8px}
+.insight-card__text{font-size:0.85rem;color:var(--text-secondary);line-height:1.6}
+.conclusion-card{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:var(--radius);padding:32px 36px;backdrop-filter:blur(20px);border-left:4px solid var(--accent-green)}
+.conclusion-card p{font-size:0.92rem;color:var(--text-secondary);line-height:1.8;margin-bottom:16px;text-align:justify}
+.conclusion-card p:last-child{margin-bottom:0}
+.conclusion-card strong{color:var(--text-primary)}
+.progress-bar{height:8px;background:rgba(255,255,255,0.06);border-radius:999px;overflow:hidden;margin-top:8px}
+.progress-bar__fill{height:100%;border-radius:999px;transition:width 1.2s ease;width:0}
+.footer{text-align:center;padding:40px 24px;color:var(--text-muted);font-size:0.8rem;border-top:1px solid var(--border-glass);margin-top:40px}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:768px){.header__title{font-size:1.8rem}.chart-grid{grid-template-columns:1fr}.cards-grid{grid-template-columns:repeat(2,1fr)}.container{padding:16px}}
+@media(max-width:480px){.cards-grid{grid-template-columns:1fr}.header__title{font-size:1.4rem}}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <h1 class="header__title">Superstore Profit Classifier</h1>
+    <p class="header__subtitle">Dashboard analisis klasifikasi High vs Low Profit Orders menggunakan 3 model ML pada dataset Sample – Superstore</p>
+    <p class="header__team">Kelompok 3 — Artificial Intelligence | Fabio • Ferazka • Aliya • Hafsa</p>
+    <a href="Sample - Superstore.csv" download class="header__download-btn">
+      Download Dataset (CSV)
+    </a>
+  </header>
+
+  <div class="container">
+
+    <!-- KEY METRICS -->
+    <section class="section" style="animation-delay: 0.1s">
+      <h2 class="section__title"><span>🎯</span> Ringkasan Dataset</h2>
+      <div class="cards-grid">
+        <div class="metric-card metric-card--blue">
+          <div class="metric-card__label">Total Transaksi</div>
+          <div class="metric-card__value" style="color: #3b82f6;">9,994</div>
+          <div class="metric-card__desc">Baris data pada dataset</div>
+        </div>
+        <div class="metric-card metric-card--cyan">
+          <div class="metric-card__label">Fitur</div>
+          <div class="metric-card__value" style="color: #06b6d4;">29</div>
+          <div class="metric-card__desc">Setelah preprocessing & encoding</div>
+        </div>
+        <div class="metric-card metric-card--green">
+          <div class="metric-card__label">Profit (Target=1)</div>
+          <div class="metric-card__value" style="color: #10b981;">80.6%</div>
+          <div class="metric-card__desc">8,058 transaksi menguntungkan</div>
+        </div>
+        <div class="metric-card metric-card--orange">
+          <div class="metric-card__label">Loss (Target=0)</div>
+          <div class="metric-card__value" style="color: #f59e0b;">19.4%</div>
+          <div class="metric-card__desc">1,936 transaksi merugi</div>
+        </div>
+        <div class="metric-card metric-card--purple">
+          <div class="metric-card__label">Missing Values</div>
+          <div class="metric-card__value" style="color: #8b5cf6;">0</div>
+          <div class="metric-card__desc">Dataset bersih, siap pakai</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TARGET DISTRIBUTION + CORRELATION -->
+    <section class="section" style="animation-delay: 0.2s">
+      <h2 class="section__title"><span>📈</span> Exploratory Data Analysis</h2>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-card__title">Distribusi Target (Imbalanced Dataset)</div>
+          <canvas id="targetDistChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card__title">Korelasi Fitur terhadap Profit</div>
+          <canvas id="correlationChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODEL PERFORMANCE -->
+    <section class="section" style="animation-delay: 0.3s">
+      <h2 class="section__title"><span>🏆</span> Perbandingan Performa Model</h2>
+
+      <div class="table-card" style="margin-bottom: 24px">
+        <table>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Accuracy</th>
+              <th>Precision</th>
+              <th>Recall</th>
+              <th>F1-Score</th>
+              <th>ROC-AUC</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:600">Logistic Regression</td>
+              <td>94.25%</td>
+              <td>95.06%</td>
+              <td>97.95%</td>
+              <td>96.49%</td>
+              <td>98.18%</td>
+              <td><span class="badge badge--good">Good</span></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600">Random Forest</td>
+              <td>94.05%</td>
+              <td>93.28%</td>
+              <td><strong>99.81%</strong></td>
+              <td>96.43%</td>
+              <td>98.29%</td>
+              <td><span class="badge badge--good">Good</span></td>
+            </tr>
+            <tr style="background: rgba(16,185,129,0.05)">
+              <td style="font-weight:600; color: #10b981">⭐ XGBoost</td>
+              <td><strong>94.35%</strong></td>
+              <td><strong>95.02%</strong></td>
+              <td>98.14%</td>
+              <td><strong>96.55%</strong></td>
+              <td><strong>98.65%</strong></td>
+              <td><span class="badge badge--best">Best</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-card__title">Perbandingan Metrik Evaluasi</div>
+          <canvas id="modelComparisonChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card__title">Confusion Matrix — XGBoost (Best Model)</div>
+          <canvas id="confusionChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- BEST MODEL HIGHLIGHT -->
+    <section class="section" style="animation-delay: 0.35s">
+      <h2 class="section__title"><span>⭐</span> Model Terbaik: XGBoost</h2>
+      <div class="cards-grid">
+        <div class="metric-card metric-card--green">
+          <div class="metric-card__label">Accuracy</div>
+          <div class="metric-card__value" style="color: #10b981;">94.35%</div>
+          <div class="progress-bar"><div class="progress-bar__fill" data-width="94.35%" style="background: linear-gradient(90deg, #10b981, #06b6d4)"></div></div>
+        </div>
+        <div class="metric-card metric-card--blue">
+          <div class="metric-card__label">Precision</div>
+          <div class="metric-card__value" style="color: #3b82f6;">95.02%</div>
+          <div class="progress-bar"><div class="progress-bar__fill" data-width="95.02%" style="background: linear-gradient(90deg, #3b82f6, #8b5cf6)"></div></div>
+        </div>
+        <div class="metric-card metric-card--cyan">
+          <div class="metric-card__label">Recall</div>
+          <div class="metric-card__value" style="color: #06b6d4;">98.14%</div>
+          <div class="progress-bar"><div class="progress-bar__fill" data-width="98.14%" style="background: linear-gradient(90deg, #06b6d4, #3b82f6)"></div></div>
+        </div>
+        <div class="metric-card metric-card--purple">
+          <div class="metric-card__label">ROC-AUC</div>
+          <div class="metric-card__value" style="color: #8b5cf6;">98.65%</div>
+          <div class="progress-bar"><div class="progress-bar__fill" data-width="98.65%" style="background: linear-gradient(90deg, #8b5cf6, #ec4899)"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURE IMPORTANCE + CROSS VALIDATION -->
+    <section class="section" style="animation-delay: 0.4s">
+      <h2 class="section__title"><span>🔍</span> Interpretabilitas & Validasi</h2>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-card__title">Feature Importance — XGBoost (Top 10)</div>
+          <canvas id="featureImportanceChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card__title">Cross-Validation (5-Fold) Accuracy</div>
+          <canvas id="cvChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- CROSS-VALIDATION TABLE -->
+    <section class="section" style="animation-delay: 0.45s">
+      <h2 class="section__title"><span>📋</span> Hasil Cross-Validation (5-Fold)</h2>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr><th>Model</th><th>Mean CV Accuracy</th><th>Std Deviation</th><th>Kestabilan</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:600">Logistic Regression</td>
+              <td>93.59%</td>
+              <td>±0.71%</td>
+              <td><span class="badge badge--good">Stabil</span></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600">Random Forest</td>
+              <td>93.22%</td>
+              <td>±0.48%</td>
+              <td><span class="badge badge--best">Paling Stabil</span></td>
+            </tr>
+            <tr style="background: rgba(16,185,129,0.05)">
+              <td style="font-weight:600; color: #10b981">⭐ XGBoost</td>
+              <td><strong>93.81%</strong></td>
+              <td>±0.42%</td>
+              <td><span class="badge badge--best">Paling Stabil</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- KEY INSIGHTS -->
+    <section class="section" style="animation-delay: 0.5s">
+      <h2 class="section__title"><span>💡</span> Key Insights</h2>
+      <div class="insights-grid">
+        <div class="insight-card">
+          <div class="insight-card__icon">🏷️</div>
+          <div class="insight-card__title">Discount = Faktor #1</div>
+          <div class="insight-card__text">Discount adalah fitur terpenting di <strong>semua model</strong>. Pemberian diskon yang terlalu besar secara signifikan meningkatkan risiko kerugian pada transaksi.</div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-card__icon">📊</div>
+          <div class="insight-card__title">Dataset Imbalanced (80:20)</div>
+          <div class="insight-card__text">80.6% transaksi menghasilkan profit, hanya 19.4% yang merugi. Model cenderung lebih mudah mempelajari pola kelas mayoritas.</div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-card__icon">🥇</div>
+          <div class="insight-card__title">XGBoost = Best Model</div>
+          <div class="insight-card__text">XGBoost memberikan performa paling <strong>seimbang</strong> — Accuracy tertinggi (94.35%), F1-Score tertinggi (96.55%), dan ROC-AUC tertinggi (98.65%).</div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-card__icon">💰</div>
+          <div class="insight-card__title">Sales Berkorelasi Positif</div>
+          <div class="insight-card__text">Korelasi Sales → Profit sebesar <strong>+0.48</strong>. Peningkatan nilai penjualan berpotensi berkontribusi terhadap profitabilitas.</div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-card__icon">🪑</div>
+          <div class="insight-card__title">Tables & Machines Berisiko</div>
+          <div class="insight-card__text">Sub-kategori <strong>Tables</strong> dan <strong>Machines</strong> merupakan fitur penting yang berpengaruh negatif terhadap profit — perlu strategi harga khusus.</div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-card__icon">✅</div>
+          <div class="insight-card__title">Model Fair & Interpretable</div>
+          <div class="insight-card__text">Analisis SHAP dan Fairness memastikan model tidak hanya akurat, tetapi juga <strong>dapat dijelaskan</strong> dan <strong>adil</strong> terhadap semua segmen pelanggan.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KESIMPULAN -->
+    <section class="section" style="animation-delay: 0.55s">
+      <h2 class="section__title"><span>📝</span> Kesimpulan</h2>
+      <div class="conclusion-card">
+        <p>Berdasarkan hasil analisis dan pemodelan yang telah dilakukan terhadap dataset <strong>Sample – Superstore</strong> dengan total <strong>9.994 transaksi</strong>, ketiga model machine learning yang digunakan — Logistic Regression, Random Forest, dan XGBoost — menunjukkan kemampuan yang sangat baik dalam mengklasifikasikan transaksi berdasarkan profitabilitasnya, dengan akurasi keseluruhan mencapai sekitar <strong>94%</strong> dan nilai ROC-AUC di atas <strong>0.98</strong>.</p>
+        <p>Di antara ketiga model, <strong>XGBoost</strong> terpilih sebagai model terbaik karena memberikan performa paling seimbang pada seluruh metrik evaluasi, termasuk Accuracy tertinggi (<strong>94.35%</strong>), F1-Score tertinggi (<strong>96.55%</strong>), dan ROC-AUC tertinggi (<strong>98.65%</strong>). Hasil cross-validation 5-fold juga mengonfirmasi bahwa XGBoost memiliki kestabilan yang baik dengan standar deviasi paling rendah (<strong>±0.42%</strong>).</p>
+        <p>Temuan paling signifikan dari analisis feature importance dan SHAP adalah bahwa <strong>Discount</strong> merupakan faktor paling berpengaruh terhadap klasifikasi profit di semua model. Diskon yang terlalu besar terbukti secara konsisten menurunkan kemungkinan transaksi menghasilkan profit. Selain itu, sub-kategori produk seperti <strong>Tables</strong> dan <strong>Machines</strong> juga teridentifikasi sebagai area yang memerlukan perhatian khusus dalam strategi penetapan harga.</p>
+        <p>Dengan dukungan analisis <strong>SHAP</strong> untuk interpretabilitas dan analisis <strong>Fairness</strong> per segmen pelanggan, model yang dihasilkan tidak hanya akurat tetapi juga transparan dan adil — menjadikannya layak untuk diimplementasikan sebagai alat bantu pengambilan keputusan bisnis dalam mengoptimalkan profitabilitas toko.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>Kelompok 3 — Tugas AI 14 | Superstore Profit Classification Dashboard</p>
+    <p style="margin-top: 6px">Built with ❤️ using HTML, CSS3 & Chart.js</p>
+  </footer>
+
+  <script>
+Chart.defaults.color='#94a3b8';Chart.defaults.font.family="'Inter',sans-serif";Chart.defaults.plugins.legend.labels.padding=16;Chart.defaults.plugins.legend.labels.usePointStyle=true;
+const C={blue:'#3b82f6',purple:'#8b5cf6',cyan:'#06b6d4',green:'#10b981',orange:'#f59e0b',red:'#ef4444',pink:'#ec4899'};
+function renderModelComparison(){const x=document.getElementById('modelComparisonChart').getContext('2d');new Chart(x,{type:'bar',data:{labels:['Accuracy','Precision','Recall','F1-Score','ROC-AUC'],datasets:[{label:'Logistic Regression',data:[0.9425,0.9506,0.9795,0.9649,0.9818],backgroundColor:C.blue+'99',borderColor:C.blue,borderWidth:2,borderRadius:6},{label:'Random Forest',data:[0.9405,0.9328,0.9981,0.9643,0.9829],backgroundColor:C.orange+'99',borderColor:C.orange,borderWidth:2,borderRadius:6},{label:'XGBoost',data:[0.9435,0.9502,0.9814,0.9655,0.9865],backgroundColor:C.green+'99',borderColor:C.green,borderWidth:2,borderRadius:6}]},options:{responsive:true,plugins:{legend:{position:'top'},tooltip:{callbacks:{label:(c)=>`${c.dataset.label}: ${(c.parsed.y*100).toFixed(2)}%`}}},scales:{y:{min:0.90,max:1.0,grid:{color:'rgba(255,255,255,0.05)'},ticks:{callback:v=>(v*100).toFixed(0)+'%'}},x:{grid:{display:false}}}}})}
+function renderTargetDistribution(){const x=document.getElementById('targetDistChart').getContext('2d');new Chart(x,{type:'doughnut',data:{labels:['Profit (Target=1)','Loss (Target=0)'],datasets:[{data:[8058,1936],backgroundColor:[C.green+'cc',C.red+'cc'],borderColor:['transparent','transparent'],borderWidth:0,hoverOffset:8}]},options:{responsive:true,cutout:'65%',plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:(c)=>{const t=9994;const p=((c.parsed/t)*100).toFixed(1);return`${c.label}: ${c.parsed.toLocaleString()} (${p}%)`}}}}}})}
+function renderFeatureImportance(){const x=document.getElementById('featureImportanceChart').getContext('2d');new Chart(x,{type:'bar',data:{labels:['Discount','Sales','Quantity','Sub-Cat: Tables','Cat: Technology','Sub-Cat: Machines','Region: South','Ship: Same Day','Segment: Home','Sub-Cat: Bookcases'],datasets:[{label:'XGBoost Feature Importance',data:[0.38,0.22,0.10,0.06,0.05,0.04,0.03,0.03,0.02,0.02],backgroundColor:[C.red+'cc',C.blue+'cc',C.cyan+'cc',C.purple+'99',C.green+'99',C.orange+'99',C.pink+'99',C.blue+'66',C.purple+'66',C.cyan+'66'],borderColor:'transparent',borderRadius:6}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>`Importance: ${(c.parsed.x*100).toFixed(1)}%`}}},scales:{x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{callback:v=>(v*100).toFixed(0)+'%'}},y:{grid:{display:false}}}}})}
+function renderCrossValidation(){const x=document.getElementById('cvChart').getContext('2d');new Chart(x,{type:'radar',data:{labels:['Fold 1','Fold 2','Fold 3','Fold 4','Fold 5'],datasets:[{label:'Logistic Regression',data:[0.934,0.938,0.930,0.942,0.936],borderColor:C.blue,backgroundColor:C.blue+'22',pointBackgroundColor:C.blue,borderWidth:2},{label:'Random Forest',data:[0.930,0.935,0.928,0.938,0.930],borderColor:C.orange,backgroundColor:C.orange+'22',pointBackgroundColor:C.orange,borderWidth:2},{label:'XGBoost',data:[0.936,0.940,0.934,0.944,0.937],borderColor:C.green,backgroundColor:C.green+'22',pointBackgroundColor:C.green,borderWidth:2}]},options:{responsive:true,scales:{r:{min:0.92,max:0.95,grid:{color:'rgba(255,255,255,0.06)'},angleLines:{color:'rgba(255,255,255,0.06)'},pointLabels:{font:{size:12}},ticks:{stepSize:0.01,callback:v=>(v*100).toFixed(0)+'%',backdropColor:'transparent'}}},plugins:{legend:{position:'bottom'}}}})}
+function renderCorrelation(){const x=document.getElementById('correlationChart').getContext('2d');new Chart(x,{type:'bar',data:{labels:['Sales → Profit','Quantity → Profit','Discount → Profit'],datasets:[{label:'Correlation with Profit',data:[0.48,0.07,-0.22],backgroundColor:[C.green+'cc',C.cyan+'99',C.red+'cc'],borderColor:'transparent',borderRadius:6}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>`Korelasi: ${c.parsed.y.toFixed(2)}`}}},scales:{y:{min:-0.4,max:0.6,grid:{color:'rgba(255,255,255,0.05)'}},x:{grid:{display:false}}}}})}
+function renderConfusionMatrix(){const x=document.getElementById('confusionChart').getContext('2d');new Chart(x,{type:'bar',data:{labels:['True Negative (TN)','False Positive (FP)','False Negative (FN)','True Positive (TP)'],datasets:[{label:'XGBoost Predictions',data:[306,81,32,1580],backgroundColor:[C.green+'cc',C.red+'99',C.orange+'99',C.blue+'cc'],borderColor:'transparent',borderRadius:6}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>`Count: ${c.parsed.y}`}}},scales:{y:{grid:{color:'rgba(255,255,255,0.05)'}},x:{grid:{display:false}}}}})}
+function animateProgressBars(){document.querySelectorAll('.progress-bar__fill').forEach(b=>{const t=b.dataset.width;setTimeout(()=>{b.style.width=t},300)})}
+function animateSections(){const s=document.querySelectorAll('.section');const o=new IntersectionObserver((e)=>{e.forEach((en,i)=>{if(en.isIntersecting){en.target.style.animationDelay=`${i*0.1}s`;en.target.classList.add('visible')}})},{threshold:0.1});s.forEach(el=>o.observe(el))}
+document.addEventListener('DOMContentLoaded',()=>{renderModelComparison();renderTargetDistribution();renderFeatureImportance();renderCrossValidation();renderCorrelation();renderConfusionMatrix();animateProgressBars();animateSections()});
+  </script>
+</body>
+</html>
